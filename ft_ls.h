@@ -47,7 +47,7 @@ typedef struct	s_arg
 	struct s_arg	*next;
 	struct stat		*stt;
 	char			*arg;
-	int				lg;
+	char			*lg;
 	int				err;
 }				t_arg;
 

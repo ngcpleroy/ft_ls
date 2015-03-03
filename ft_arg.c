@@ -122,118 +122,26 @@ t_arg	*ft_arg_list(const char **av, const size_t lg, const size_t s, t_arg *cr_a
 			cr_arg->arg = ft_strcpy(cr_arg->arg, av[0]);
 		if ((cr_arg->stt = malloc(sizeof(struct stat))))
 			lstat(av[0], cr_arg->stt);
-		cr_arg->lg = lg + 1;
+		cr_arg->cr_arg = cr_arg->arg;
 		cr_arg->err = errno;
 		cr_arg->next = ft_arg_list(av + 1, ft_strlen(av + 1), s + 1, NULL);
-	}
-	else if (!s && av && *av && (cr_arg = (t_arg*)malloc(sizeof(t_arg))))
-	{
-		cr_arg->err = 0;
-		if ((cr_arg->arg = (char*)malloc(ft_strlen((const char*)av) + 1)))
-			cr_arg->arg = ft_strcpy(cr_arg->arg, (const char*)av);
-		if ((cr_arg->stt = malloc(sizeof(struct stat))))
-			lstat((const char*)av, cr_arg->stt);
-		cr_arg->lg = lg + 1;
-		cr_arg->err = errno;
-		cr_arg->next = NULL;
 	}
 	ft_arg_alpha((const t_arg**)&cr_arg, cr_arg, cr_arg);
 	return (cr_arg);
 }
 
-void	ft_arg_alpha(const t_arg **begin, t_arg *tmp, t_arg *t)
+t_arg	*ft_arg_node(const char *path, const char *av, t_arg *cr_arg)
 {
-	char		*arg;
-	struct stat	*stt;
-	int			err;
-	int			lg;
-
-	if (*begin)
-	{
-		if (tmp && t && ft_strcmp(tmp->arg, t->arg) > 0)
-		{
-			arg = t->arg;
-			stt = t->stt;
-			err = t->err;
-			lg = t->lg;
-			t->arg = tmp->arg;
-			t->stt = tmp->stt;
-			t->err = tmp->err;
-			t->lg = tmp->lg;
-			tmp->arg = arg;
-			tmp->stt = stt;
-			tmp->err = err;
-			tmp->lg = lg;
-			ft_arg_alpha(begin, (t_arg *)*begin, (t_arg *)*begin);
-		}
-		else if (tmp && t)
-			ft_arg_alpha(begin, tmp, t->next);
-		else if (tmp && !t)
-			ft_arg_alpha(begin, tmp->next, tmp->next);
-	}
-}
-
-void	ft_arg_time(const t_arg **begin, t_arg *tmp, t_arg *t)
-{
-	char		*arg;
-	struct stat	*stt;
-	int			err;
-	int			lg;
-
-	if (begin && *begin && (ft_parse_sgl(-1) & CHAR_T))
-	{
-		if (tmp && t && (tmp->stt->st_mtime > t->stt->st_mtime))
-		{
-			arg = t->arg;
-			stt = t->stt;
-			err = t->err;
-			lg = t->lg;
-			t->arg = tmp->arg;
-			t->stt = tmp->stt;
-			t->err = tmp->err;
-			t->lg = tmp->lg;
-			tmp->arg = arg;
-			tmp->stt = stt;
-			tmp->err = err;
-			tmp->lg = lg;
-			ft_arg_time(begin, (t_arg *)*begin, (t_arg *)*begin);
-		}
-		else if (tmp && t)
-			ft_arg_time(begin, tmp, t->next);
-		else if (tmp && !t)
-			ft_arg_time(begin, tmp->next, tmp->next);
-	}
-}
-
-void	ft_arg_revolve(t_arg **begin, t_arg *save, t_arg *head)
-{
-	if (save && save->next)
-	{
-		head = save->next;
-		ft_arg_revolve(&(save->next), save->next, NULL);
-		head->next = save;
-		*begin = save->next;
-		head->next->next = NULL;
-	}
-}
-
-char	ft_arg_dump_errors(t_arg **cur, t_arg *tmp, char chip)
-{
-	if (*cur)
-	{
-		chip = ((*cur)->err == ENOENT) ? ft_pstr((*cur)->arg, 2)
-			+ ft_pendl(" : No such file or directory", 2) : chip;
-		chip = ((*cur)->err == EACCES) ? ft_pstr((*cur)->arg, 2)
-			+ ft_pendl(" : Permission denied", 2) : chip;
-		if (chip)
-		{
-			free((*cur)->arg);
-			free((*cur)->stt);
-			free(*cur);
-			*cur = NULL;
-			cur = &tmp;
-		}
-		chip = (tmp) ? ft_arg_dump_errors(&tmp, tmp->next, 0) : 0;
-	}
-	return (chip);
+  if (path && av && (cr_arg = (t_arg*)malloc(sizeof(t_arg))))
+    {
+      cr_arg->err = 0;
+      if ((cr_arg->arg = (char*)malloc(ft_strlen(path + 1))))
+	cr_arg->arg = ft_strcpy(cr_arg->arg, path);
+      if ((cr_arg->stt = malloc(sizeof(struct stat))))
+	lstat(av, cr_arg->stt);
+      cr_arg->av = cr_arg->arg + (ft_strlen(path) - ft_strlen(av) - 1);
+      cr_arg->err = errno;
+      cr_arg->next = NULL;
+    }
+  return (cr_arg);
 }

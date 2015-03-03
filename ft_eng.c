@@ -214,7 +214,7 @@ t_arg**		ft_eng_dir(const t_arg *cur, t_arg **l, DIR *d, ssize_t s)
 	else if ((l) && !(*l) && d && (dent = readdir(d)))
 	{
 		c_buf = ft_strdir((const char*)cur->arg, (const char*)dent->d_name);
-		*l = ft_arg_list((const char **)c_buf, 0, ft_strlen(dent->d_name), NULL);
+		*l = ft_arg_node(c_buf, (const char*)dent->d_name, NULL);
 		free(c_buf);
 		(*l)->next = *ft_eng_dir(cur, &(*l)->next, d, s + ((*l)->stt->st_blocks));
 	}
