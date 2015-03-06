@@ -6,7 +6,7 @@
 /*   By: nleroy <nleroy@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2015/02/03 14:15:23 by nleroy            #+#    #+#             */
-/*   Updated: 2015/02/11 16:46:15 by nleroy           ###   ########.fr       */
+/*   Updated: 2015/03/06 12:31:46 by nleroy           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,6 +64,18 @@ struct tt
 	int		f2;
 	int		f3;
 };
+
+struct	ft_pl
+{
+	char	i;
+	char	(*ft_pl)(const t_arg *, char **, int);
+}
+
+struct ft_cpt
+{
+	char	i;
+	char	(*ft_cpt)(const t_arg *, int);
+}
 
 /*
 ** ft_parse.c

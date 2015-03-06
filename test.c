@@ -1,22 +1,38 @@
-#define _BSD_SOURCE
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <stdlib.h>
 #include <stdio.h>
-#include <time.h>
 
-int main()
+struct test
 {
-	struct stat *yo;
+	char	i;
+	void	(*function)(char*);
+};
 
-	yo = (struct stat *)malloc(sizeof(struct stat));
-	printf("%d\n", lstat("test.c", yo));
-	printf("Hello %u\n", major(yo->st_rdev));
-	printf("World %u\n", minor(yo->st_rdev));	
-	printf("! %lld\n", yo->st_size);	
-	printf("Device number (st_rdev):  major=%ld; minor=%ld\n",
-		   (long) major(yo->st_rdev), (long) minor(yo->st_rdev));
-	printf("%s\n", ctime(&yo->st_ctime));
-	return (0);
+void	foo(char *str);
+void	bar(char *str);
+
+const struct test ft_test[2] =
+{
+	{0, foo},
+	{1, bar}
+};
+
+void	foo(char *str)
+{
+	printf("HELLO %s\n", str);
+}
+
+void	bar(char *str)
+{
+	printf("hello %s\n", str);
+}
+
+int		main(void)
+{
+	char i = 0;
+
+	while (i < 2)
+	{
+		ft_test[(int)i].function("world");
+		i++;
+	}
+	return (1);
 }

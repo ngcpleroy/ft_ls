@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   eng.c                                              :+:      :+:    :+:   */
+/*   ft_eng.c                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: nleroy <nleroy@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2015/02/04 14:46:33 by nleroy            #+#    #+#             */
-/*   Updated: 2015/02/18 11:52:32 by nleroy           ###   ########.fr       */
+/*   Created: 2015/03/06 13:18:30 by nleroy            #+#    #+#             */
+/*   Updated: 2015/03/06 13:24:08 by nleroy           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,30 @@
 */
 
 #include "ft_ls.h"
+
+const struct ft_cpt g_ft_cpt[9] = 
+{
+	{0, ft_cpt_links},
+	{1, ft_cpt_user},
+	{2, ft_cpt_group},
+	{3, ft_cpt_major},
+	{4, ft_cpt_size},
+	{5, ft_cpt_time},
+	{6, ft_cpt_name},
+	{7, ft_cpt_link}
+}
+
+const struct ft_pl g_ft_pl[9] = 
+{
+	{0, ft_pl_links},
+	{1, ft_pl_user},
+	{2, ft_pl_group},
+	{3, ft_pl_major},
+	{4, ft_pl_size},
+	{5, ft_pl_time},
+	{6, ft_pl_name},
+	{7, ft_pl_link}
+}
 
 /*
 **  FT_ENG_LAUNCH |
@@ -136,14 +160,8 @@
 
 char			ft_eng_launch(t_arg **l, char chip, t_arg **files, t_arg *cur)
 {
-ft_pnbr_base(__LINE__, 10, 1);
-ft_pendl(__FUNCTION__, 1);
-ft_pendl("", 1);
 	if (l && *l)
 	{
-ft_pnbr_base(__LINE__, 10, 1);
-ft_pendl(__FUNCTION__, 1);
-ft_pendl("", 1);
 		if (!chip)
 			chip = (!chip) ? ft_eng_parse_files(l, (*l)->next, 0, files) : 1;
 		chip = (!chip && files) ? ft_eng_launch(files, 1, files, NULL) : chip;
@@ -155,10 +173,6 @@ ft_pendl("", 1);
 			if ((ft_parse_sgl(-1) & CHAR_RR || !chip) && S_ISDIR(cur->stt->st_mode) &&
 				(files = ft_eng_dir(cur, files, NULL, -1)))
 			{
-ft_pchar(chip + '0', 1);
-ft_pnbr_base(__LINE__, 10, 1);
-ft_pendl(__FUNCTION__, 1);
-ft_pendl("", 1);
 				ft_eng_launch(files, 1, files, NULL);
 			}
 			l = &(cur->next);
@@ -222,4 +236,34 @@ t_arg**		ft_eng_dir(const t_arg *cur, t_arg **l, DIR *d, ssize_t s)
 			ft_pnbr_base((long)s, 10, 1))
 		ft_pendl("", 1);
 	return (l);
+}
+
+char	ft_eng_file_launch(const t_arg *cur, int i)
+{
+	int		ends[8];
+	int		total_size;
+	char	*str;
+
+	while (i < 8)
+	{
+		ends[i] = g_ft_cpt[i].ft(cur, 0);
+		total_size += ends[i];
+		i++;
+	}
+	if ((st = (char*)malloc(total_size + 8 + 10)))
+		ft_format_fresh(&str, total_size + 8 + 10);
+	return (ft_eng_file_play(cur, ends, &str));
+}
+
+char	ft_eng_file_play(const t_arg *cur, int ends[8], char **str, char i)
+{
+	if (cur)
+	{
+		while (i < 8)
+			i += g_ft_pl.ft(cur, str, end[i]);
+		ft_pendl(*str, 1);
+		ft_format_fresh(str, ft_strlen(*str) + 1);
+		return (ft_eng_file_play(cur->next, ends, str, 0));
+	}
+	return (1);
 }
