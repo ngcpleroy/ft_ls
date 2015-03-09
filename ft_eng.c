@@ -6,7 +6,7 @@
 /*   By: nleroy <nleroy@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2015/03/06 13:18:30 by nleroy            #+#    #+#             */
-/*   Updated: 2015/03/06 13:24:08 by nleroy           ###   ########.fr       */
+/*   Updated: 2015/03/09 14:23:35 by nleroy           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,6 +40,30 @@ const struct ft_pl g_ft_pl[9] =
 	{7, ft_pl_link}
 }
 
+const struct t	g_t[9] =
+{
+	{'-', S_IFREG},
+	{'d', S_IFDIR},
+	{'c', S_IFCHR},
+	{'b', S_IFBLK},
+	{'p', S_IFIFO},
+	{'l', S_IFLNK},
+	{'s', S_IFSOCK},
+	{'?', 0},
+};
+
+const struct tt	g_tt[9] =
+{
+	{'s', S_IXUSR | S_ISUID, S_IXGRP | S_ISGID, -1},
+	{'t', -1, -1, S_IXOTH | S_ISVTX},
+	{'r', S_IRUSR, S_IRGRP, S_IROTH},
+	{'w', S_IWUSR, S_IWGRP, S_IWOTH},
+	{'x', S_IXUSR, S_IXGRP, S_IXOTH},
+	{'S', S_ISUID, S_ISGID, -1},
+	{'T', -1, -1, S_ISVTX},
+	{'-', 0, 0, 0}
+};
+
 /*
 **  FT_ENG_LAUNCH |
 **  ______________|
@@ -67,6 +91,56 @@ const struct ft_pl g_ft_pl[9] =
 **    change its value along the list, then is deleted.
 */
 /*
+** FT_ENG_FILES |
+** _____________|
+** Function diplaying all informations required. Given a t_arg node, the spaces
+** between each -l option information are being computed, and stored into an
+** array. Then the protection status, ACL and extended attribute, and link
+** status are being computed and display. If the -l is not present, only the
+** file name is displayed, unless it begins with a '.' and -a option is absent.
+** Then recursively called on the next node.
+** PROTOTYPE VARIABLE
+**  > l : the current node of the linked list to be displayed.
+**  > k : control char, used to increment g_t and g_tt structure, also used as
+**    incremental value for the blanks array giving numbers of space to dusplay
+**    between rows.
+**  > c : chip control char, incrementing as the function goes. if he is
+**    equal to 0 during return, problem occured and an error is displayed.
+**  > lk is used as a buffer for the readlink function, to properly diplay the
+**    name of the linked file, by default equall to NULL.
+** LOCAL VARAIBLE*
+**  > blk : array storing max spaces to display, computed by the ft_eng_blks
+**    function.
+*/
+
+char			ft_eng_launch(t_arg **l, char chip, t_arg **files, t_arg *cur)
+{
+	if (l && *l)
+	{
+		if (!chip)
+			chip = (!chip) ? ft_eng_parse_files(l, (*l)->next, 0, files) : 1;
+		chip = (!chip && files) ? ft_eng_launch(files, 1, files, NULL) : chip;
+		chip += (files) ? ft_eng_file_launch((const t_arg*) *l, 1) : 0;
+		while (l && *l && (cur = (*l)))
+		{
+			cur = *l;
+			if ((ft_parse_sgl(-1) & CHAR_RR || !chip) && S_ISDIR(cur->stt->st_mode) &&
+				(files = ft_eng_dir(cur, files, NULL, -1)))
+				ft_eng_launch(files, 1, files, NULL);
+			l = &(cur->next);
+			free(cur->stt);
+			free(cur->arg);
+			free(cur);
+			cur = NULL;
+		}
+	}
+	if (l && *l)
+		free(l);
+	l = NULL;
+	return (1);
+}
+
+/*
 ** FT_ENG_PARSE_FILES |
 ** ___________________|
 ** Function checking for files on the current first node of the list, and if
@@ -83,6 +157,27 @@ const struct ft_pl g_ft_pl[9] =
 **    affected to each non-null non directory node. If no affectation occurs,
 **    then is sent back to the next call of the function.
 */
+
+char			ft_eng_parse_files(t_arg **cur, t_arg *tmp, char chip,
+									t_arg **files)
+{
+	if (*cur)
+	{
+		chip = ((*cur)->err == ENOTDIR) ? 1 : 0;
+		if (chip)
+		{
+			(*files) = (*cur);
+			(*files)->next = NULL;
+			cur = &tmp;
+		}
+		if (tmp)
+			chip = (files && *files) ?
+				ft_eng_parse_files(&tmp, tmp->next, 0, &(*files)->next)
+				: ft_eng_parse_files(&tmp, tmp->next, 0, files);
+	}
+	return (0);
+}
+
 /*
 ** FT_ENG_PARSE_DIR |
 ** _________________|
@@ -113,100 +208,6 @@ const struct ft_pl g_ft_pl[9] =
 **    size of the list. Since the lsit is being created on the stack, will
 **    will increment on each returned frame of the function.
 */
-/*
-** FT_ENG_FILES |
-** _____________|
-** Function diplaying all informations required. Given a t_arg node, the spaces
-** between each -l option information are being computed, and stored into an
-** array. Then the protection status, ACL and extended attribute, and link
-** status are being computed and display. If the -l is not present, only the
-** file name is displayed, unless it begins with a '.' and -a option is absent.
-** Then recursively called on the next node.
-** PROTOTYPE VARIABLE
-**  > l : the current node of the linked list to be displayed.
-**  > k : control char, used to increment g_t and g_tt structure, also used as
-**    incremental value for the blanks array giving numbers of space to dusplay
-**    between rows.
-**  > c : chip control char, incrementing as the function goes. if he is
-**    equal to 0 during return, problem occured and an error is displayed.
-**  > lk is used as a buffer for the readlink function, to properly diplay the
-**    name of the linked file, by default equall to NULL.
-** LOCAL VARAIBLE*
-**  > blk : array storing max spaces to display, computed by the ft_eng_blks
-**    function.
-*/
-/*
-** FT_ENG_BLKS |
-**_____________|
-** Fonction computing number of blanks to put between each output of an -l
-** option line and printing the number of hard links, user, group and size of
-** a give object, with the proper blanks to be displayed for it to be aligned.
-** PROTOTYPE VARIABLE *
-**  > cur : the current node of the linked list to be displayed, or its space
-**    to be computed.
-**  > k : a control char giving either used as the kth case of the blanks array
-**    to be filled, or the (k + 1)th information to be printed. On a value of 5,
-**    will display time.
-**  > c : a control char giving the kind of operation to execute on the return
-**    char. either it's used as checking value to know the maximum size of a
-**    number, or a null control char to compute the size of a string, or a
-**    negative control char to print the (k + 1)th information.
-**  > r : the return char value, used to either give the proper number of max
-**    spaces to be printed on the k-th case of the array, or the control chip to
-**    check print return value.
-** LOCAL VARIABLE *
-**  > s : a incremental value to help computing a number literal length.
-*/
-
-char			ft_eng_launch(t_arg **l, char chip, t_arg **files, t_arg *cur)
-{
-	if (l && *l)
-	{
-		if (!chip)
-			chip = (!chip) ? ft_eng_parse_files(l, (*l)->next, 0, files) : 1;
-		chip = (!chip && files) ? ft_eng_launch(files, 1, files, NULL) : chip;
-		chip += (files) ? ft_eng_file((const t_arg *)*files, 0,
-								(CHAR_L & ft_parse_sgl(-1)) - 1, NULL) : 0;
-		while (l && *l && (cur = (*l)))
-		{
-			cur = *l;
-			if ((ft_parse_sgl(-1) & CHAR_RR || !chip) && S_ISDIR(cur->stt->st_mode) &&
-				(files = ft_eng_dir(cur, files, NULL, -1)))
-			{
-				ft_eng_launch(files, 1, files, NULL);
-			}
-			l = &(cur->next);
-			free(cur->stt);
-			free(cur->arg);
-			free(cur);
-			cur = NULL;
-		}
-	}
-	if (l && *l)
-		free(l);
-	l = NULL;
-	return (1);
-}
-
-char			ft_eng_parse_files(t_arg **cur, t_arg *tmp, char chip,
-									t_arg **files)
-{
-	if (*cur)
-	{
-		chip = ((*cur)->err == ENOTDIR) ? 1 : 0;
-		if (chip)
-		{
-			(*files) = (*cur);
-			(*files)->next = NULL;
-			cur = &tmp;
-		}
-		if (tmp)
-			chip = (files && *files) ?
-				ft_eng_parse_files(&tmp, tmp->next, 0, &(*files)->next)
-				: ft_eng_parse_files(&tmp, tmp->next, 0, files);
-	}
-	return (0);
-}
 
 t_arg**		ft_eng_dir(const t_arg *cur, t_arg **l, DIR *d, ssize_t s)
 {
@@ -240,30 +241,53 @@ t_arg**		ft_eng_dir(const t_arg *cur, t_arg **l, DIR *d, ssize_t s)
 
 char	ft_eng_file_launch(const t_arg *cur, int i)
 {
-	int		ends[8];
+	int		ends[9];
 	int		total_size;
 	char	*str;
 
-	while (i < 8)
+	str = NULL;
+	ends[0] = 0;
+	if (ft_parse_sgl(-1) & CHAR_L)
 	{
-		ends[i] = g_ft_cpt[i].ft(cur, 0);
-		total_size += ends[i];
-		i++;
+		while (i < 9)
+		{
+			ends[i] = g_ft_cpt[i].ft(cur, 0);
+			total_size += ends[i];
+			i++;
+		}
+		if ((str = (char*)malloc(total_size + 8 + 10)))
+			ft_format_fresh(&str, total_size + 8 + 10);
 	}
-	if ((st = (char*)malloc(total_size + 8 + 10)))
-		ft_format_fresh(&str, total_size + 8 + 10);
-	return (ft_eng_file_play(cur, ends, &str));
+	ft_eng_file_play(cur, ends, &str);
+	if (str)
+		free(str);
+	return (i);
 }
 
 char	ft_eng_file_play(const t_arg *cur, int ends[8], char **str, char i)
 {
-	if (cur)
+	int		j;
+	char	c;
+
+	c = 0;
+	if (cur && ft_parse_sgl(-1) & CHAR_L)
 	{
-		while (i < 8)
-			i += g_ft_pl.ft(cur, str, end[i]);
-		ft_pendl(*str, 1);
+		while ((j = 0) && c < 10 && cur && !cur->err)
+		{
+			while (i < 7 && !((cur->stt->st_mode & g_t[j].flag && c == 0)
+			|| (!(cur->stt->st_mode & g_tt[j].f1) && c < 4)
+			|| (!(cur->stt->st_mode & g_tt[j].f2) && c >= 4 && c < 7)
+			|| (!(cur->stt->st_mode & g_tt[j].f3) && c >= 7 && c < 10)))
+				i++;
+			c += (c >= 0) ? ft_pchar(g_tt[j].c, 1) : ft_pchar(g_t[j].c, 1);
+			c += (c == 10) ? ft_pchar(' ', 1) : 0;
+		}
+		while (8 < 8)
+			i += g_ft_pl.ft(cur, *str), end[i + 1]);
 		ft_format_fresh(str, ft_strlen(*str) + 1);
 		return (ft_eng_file_play(cur->next, ends, str, 0));
 	}
+	else if (cur)
+		ft_pendl(cur->lg, 1);
 	return (1);
 }
